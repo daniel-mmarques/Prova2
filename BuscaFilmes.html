@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Finder</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        .movieSearch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100vw;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .searchField {
+            width: 50%;
+            background-color: #2c2c2c;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .inputField {
+            display: flex;
+            gap: 10px;
+        }
+        .form-control {
+            border-radius: 8px;
+        }
+        .displayMovies {
+            width: 100%;
+            background-color: #2c2c2c;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .poster {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #3a3a3a;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+        }
+        .poster img {
+            border-radius: 8px;
+            height: 222px;
+            width: 150px;
+        }
+        .poster ul {
+            list-style: none;
+            padding: 0;
+        }
+        #movies {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="movieSearch">
+        <div class="searchField">
+            <p class="text-primary upperTextInput"></p>
+            <div class="inputField">
+                <input type="text" class="form-control" placeholder="Enter movie name">
+                <button id="searchReset" class="btn btn-outline-primary">Search</button>
+            </div>
+        </div>
+        <div class="displayMovies">
+            <hr class="text-primary">
+            <div id="movies"></div>
+        </div>
+    </div>
+    <script>
+        const inputText = document.querySelector("input");
+        const btnSearch = document.querySelector("#searchReset");
+        const upperText = document.querySelector(".upperTextInput");
+        const apikey = "b76f27a8";
+        let resetSearch = false;
+        
+        btnSearch.addEventListener("click", () => {
+            let title = inputText.value;
+            
+            if (resetSearch) {
+                btnSearch.innerText = "Search";
+                inputText.value = "";
+                resetSearch = false;
+            } else {
+                if (title.length < 3) {
+                    upperText.style.visibility = "visible";
+                    upperText.innerHTML = "Enter at least 3 characters!";
+                    inputText.value = "";
+                } else {
+                    btnSearch.innerText = "Clear";
+                    resetSearch = true;
+                    let url = `https://www.omdbapi.com/?s=${title}&apikey=${apikey}`;
+                    fetch(url)
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById("movies").innerHTML = "";
+                            if (data.Search) {
+                                data.Search.forEach(movie => {
+                                    fetch(`https://www.omdbapi.com/?i=${movie.imdbID}&apikey=${apikey}`)
+                                        .then(r => r.json())
+                                        .then(details => {
+                                            document.querySelector("#movies").innerHTML += moviePoster(details);
+                                        });
+                                });
+                            } else {
+                                upperText.innerHTML = "No movies found.";
+                            }
+                        });
+                    upperText.innerHTML = `Showing results for: ${title}`;
+                }
+            }
+        });
+
+        function moviePoster(json) {
+            return `
+                <div class="poster">
+                    <h6>${json.Title}</h6>
+                    <img src="${json.Poster}" alt="Poster">
+                    <ul>
+                        <li><strong>Duration:</strong> ${json.Runtime}</li>
+                        <li><strong>Year:</strong> ${json.Year}</li>
+                        <li><strong>Genre:</strong> ${json.Genre}</li>
+                    </ul>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
